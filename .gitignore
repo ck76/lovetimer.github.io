@@ -1,6 +1,6 @@
 *.iml
 .gradle
-/local.properties
+#/local.properties
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -14,11 +14,11 @@
 .cxx
 local.properties
 
-
+*/build
 # Built application files
-*.apk
-*.ap_
-*.aab
+#*.apk
+#*.ap_
+#*.aab
 
 # Files for the Dalvik VM
 *.dex
@@ -30,7 +30,7 @@ local.properties
 bin/
 gen/
 out/
-release/
+#release/
 build/
 
 # Gradle files
