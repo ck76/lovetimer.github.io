@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.lovetimer.ui.theme.LoveTimerTheme
 import kotlinx.coroutines.delay
+import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -122,7 +123,6 @@ fun LoveTimerApp() {
                 startTime = dataTimeString
                 savePreferences(context, null, dataTimeString)
             },
-            context
         )
     }
 }
@@ -251,30 +251,25 @@ fun loadPreferences(context: Context): Pair<String?, String?> {
 fun CustomDateTimePickerDialog(
     showDialog: MutableState<Boolean>,
     onDateTimeSelected: (LocalDateTime, String) -> Unit,
-    context: Context // 添加Context参数以允许访问资源字符串
 ) {
     if (showDialog.value) {
         val year = remember { mutableStateOf("") }
         val month = remember { mutableStateOf("") }
         val day = remember { mutableStateOf("") }
 
-        // 定义变量以存储潜在的错误消息
         val errorMessage = remember { mutableStateOf<String?>(null) }
 
         AlertDialog(
             onDismissRequest = {
-                // 重置错误消息并关闭对话框
                 errorMessage.value = null
                 showDialog.value = false
             },
             title = { Text(text = "Select Date and Time") },
             text = {
                 Column {
-                    // 如果有错误消息，显示它
                     errorMessage.value?.let {
                         Text(text = it, color = MaterialTheme.colorScheme.error)
                     }
-
                     TextField(
                         value = year.value,
                         onValueChange = { year.value = it },
@@ -298,22 +293,28 @@ fun CustomDateTimePickerDialog(
             confirmButton = {
                 Button(
                     onClick = {
-                        val selectedDate = LocalDate.of(
-                            year.value.toIntOrNull() ?: return@Button,
-                            month.value.toIntOrNull() ?: return@Button,
-                            day.value.toIntOrNull() ?: return@Button
-                        )
+                        val yearInt = year.value.toIntOrNull()
+                        val monthInt = month.value.toIntOrNull()
+                        val dayInt = day.value.toIntOrNull()
 
-                        // 校验所选日期不晚于今天
-                        if (selectedDate.isAfter(LocalDate.now())) {
-                            // 更新错误消息
-                            errorMessage.value = "The selected date cannot be later than today."
-                        } else {
-                            val dataTimeString =
-                                "${selectedDate.year}-${selectedDate.monthValue}-${selectedDate.dayOfMonth}"
-                            onDateTimeSelected(selectedDate.atStartOfDay(), dataTimeString)
-                            errorMessage.value = null
-                            showDialog.value = false
+                        if (yearInt == null || monthInt == null || dayInt == null || yearInt < 1 || monthInt !in 1..12) {
+                            errorMessage.value = "Please enter a valid date."
+                            return@Button
+                        }
+
+                        try {
+                            val selectedDate = LocalDate.of(yearInt, monthInt, dayInt)
+
+                            if (selectedDate.isAfter(LocalDate.now())) {
+                                errorMessage.value = "The selected date cannot be later than today."
+                            } else {
+                                val dataTimeString = "${selectedDate.year}-${selectedDate.monthValue}-${selectedDate.dayOfMonth}"
+                                onDateTimeSelected(selectedDate.atStartOfDay(), dataTimeString)
+                                errorMessage.value = null
+                                showDialog.value = false
+                            }
+                        } catch (e: DateTimeException) {
+                            errorMessage.value = "The date does not exist."
                         }
                     }
                 ) {
@@ -322,7 +323,6 @@ fun CustomDateTimePickerDialog(
             },
             dismissButton = {
                 Button(onClick = {
-                    // 重置错误消息并关闭对话框
                     errorMessage.value = null
                     showDialog.value = false
                 }) {
@@ -332,5 +332,4 @@ fun CustomDateTimePickerDialog(
         )
     }
 }
-
 
