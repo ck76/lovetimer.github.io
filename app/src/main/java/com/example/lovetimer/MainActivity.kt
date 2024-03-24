@@ -33,7 +33,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import com.example.lovetimer.ui.theme.LoveTimerTheme
 import kotlinx.coroutines.delay
@@ -68,14 +67,10 @@ fun LoveTimerApp() {
     val context = LocalContext.current
 
     var updateTrigger by remember { mutableStateOf(0) }
-    val currentTrigger by rememberUpdatedState(updateTrigger)
     val showCustomDateTimePicker = remember { mutableStateOf(false) }
-    // 从SharedPreferences加载URI和开始时间
     val (initialUri, initialStartTime) = loadPreferences(context)
-    Logger.getGlobal().log(Level.WARNING, initialUri?.toString() + "得到的URL ckkkkkkkkk")
     var startTime by rememberSaveable { mutableStateOf(initialStartTime) }
     var selectedImageUri by rememberSaveable { mutableStateOf(initialUri) }
-    val triggerRecompositionKey = remember { mutableStateOf(0) }
 
     val openDocumentLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
@@ -83,26 +78,12 @@ fun LoveTimerApp() {
                 try {
                     selectedImageUri = uri.toString()
                     updateTrigger = updateTrigger + 1
-                    triggerRecompositionKey.value++
-//val uri = uriString?.let { Uri.parse(it) }
+//                    updateTrigger = updateTrigger + 1
                     savePreferences(context, selectedImageUri, null)
-                    Logger.getGlobal()
-                        .log(Level.WARNING, uri?.toString() + "照片不是不是的空的啊 ckkkkkkkkk")
-                    Logger.getGlobal().log(
-                        Level.WARNING,
-                        selectedImageUri?.toString() + "selectedImageUri照片不是不是的空的啊 ckkkkkkkkk"
-                    )
-
                     // 请求持久化权限
                     val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                     context.contentResolver.takePersistableUriPermission(selectedUri, takeFlags)
-
-                    // 保存URI以便未来使用
-//                    savePreferences(context, selectedUri.toString(), null)
-
-                    Logger.getGlobal()
-                        .log(Level.WARNING, uri?.toString() + "照片的空的啊 ckkkkkkkkk")
 
                 } catch (e: SecurityException) {
                     Logger.getGlobal().log(Level.SEVERE, "请求持久化URI权限失败", e)
@@ -114,8 +95,6 @@ fun LoveTimerApp() {
 
     Column {
 
-        Logger.getAnonymousLogger().log(Level.WARNING, startTime.toString() + "ckkkkkk")
-        Logger.getAnonymousLogger().log(Level.WARNING, startTime + "ckkkkkk")
         // Display Love Time
         val (startYear, startMonth, startDay) = startTime.toString().split("-")
         LoveTimeDisplay(
@@ -164,41 +143,10 @@ fun LoveTimeDisplay(
     startMinute: Int = 0,
     startSecond: Int = 0
 ) {
-
-
-    Logger.getGlobal().log(
-        Level.WARNING,
-        selectedImageUri.toString() + " selectedImageUri.toString() ckkkkkkkkk 啊啊啊啊"
-    )
-    var imageUriCk by remember { mutableStateOf(selectedImageUri) }
-    LaunchedEffect(selectedImageUri) {
-        imageUriCk = selectedImageUri
-    }
-
-    Logger.getGlobal()
-        .log(Level.WARNING, imageUriCk.toString() + " imageUriCk.toString() ckkkkkkkkk 啊啊啊啊")
     selectedImageUri?.let { uriString ->
-
-
-        Logger.getGlobal().log(
-            Level.WARNING,
-            uriString?.let { Uri.parse(it) }?.toString() + " 更新了界面 ckkkkkkkkk 啊啊啊啊"
-        )
         Image(
             painter = rememberAsyncImagePainter(
                 model = Uri.parse(selectedImageUri),
-                onState = { state ->
-                    when (state) {
-                        is AsyncImagePainter.State.Loading -> Logger.getGlobal()
-                            .info("图片加载中...")
-
-                        is AsyncImagePainter.State.Success -> Logger.getGlobal()
-                            .info("图片加载成功！")
-
-                        is AsyncImagePainter.State.Error -> Logger.getGlobal().info("图片加载失败！")
-                        else -> {} // 其他状态可以根据需要处理
-                    }
-                }
             ),
             contentDescription = null,
             modifier = Modifier
@@ -242,14 +190,6 @@ fun LoveTimeDisplay(
         }
     }
 
-//    LaunchedEffect(key1 = selectedImageUri) {
-//        while (true) {
-//            delay(1000);
-//            imageUriCk = targetImageUri
-//            // This ensures the loop runs every second
-//        }
-//    }
-
     Text(
         text = "Love Time: $years years, $months months, $days days, $hours hours, $minutes minutes, $seconds seconds",
         modifier = Modifier
@@ -274,9 +214,6 @@ fun savePreferences(context: Context, uri: String?, startTime: String?) {
         val sharedPref = context.getSharedPreferences("LoveTimerPreferences", Context.MODE_PRIVATE)
         with(sharedPref.edit()) {
             putString("selectedImageUri", uri.toString())
-            Logger.getGlobal()
-                .log(Level.WARNING, uri?.toString() + "selectedImageUri cunchu  ckkkkkkkkk")
-
             apply()
         }
     }
@@ -308,9 +245,6 @@ fun loadPreferences(context: Context): Pair<String?, String?> {
         dateTime.year.toString() + "-" + dateTime.monthValue.toString() + "-" + dateTime.dayOfMonth.toString() + "-" + dateTime.hour.toString() + "-" + dateTime.minute.toString()
 
     val dataTimeString = sharedPref.getString("startTime", curDataTimeString)
-
-    Logger.getGlobal().log(Level.WARNING, uri?.toString() + "获取 URI  ckkkkkkkkk")
-    Logger.getGlobal().log(Level.WARNING, dataTimeString?.toString() + "获取 日期  ckkkkkkkkk")
 
     return Pair(uriString, dataTimeString)
 }
