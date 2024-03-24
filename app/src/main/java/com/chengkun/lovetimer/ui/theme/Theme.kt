@@ -1,4 +1,4 @@
-package com.example.lovetimer.ui.theme
+package com.chengkun.lovetimer.ui.theme
 
 import android.app.Activity
 import android.os.Build

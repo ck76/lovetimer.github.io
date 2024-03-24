@@ -1,4 +1,4 @@
-package com.example.lovetimer
+package com.chengkun.lovetimer
 
 import android.content.Context
 import android.content.Intent
@@ -34,7 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import com.example.lovetimer.ui.theme.LoveTimerTheme
+import com.chengkun.lovetimer.ui.theme.LoveTimerTheme
 import kotlinx.coroutines.delay
 import java.time.DateTimeException
 import java.time.LocalDate

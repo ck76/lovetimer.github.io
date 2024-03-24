@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.lovetimer"
+    namespace = "com.chengkun.lovetimer"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.lovetimer"
+        applicationId = "com.chengkun.lovetimer"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

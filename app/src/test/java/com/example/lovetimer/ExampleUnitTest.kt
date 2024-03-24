@@ -1,4 +1,4 @@
-package com.example.lovetimer
+package com.chengkun.lovetimer
 
 import org.junit.Test
 

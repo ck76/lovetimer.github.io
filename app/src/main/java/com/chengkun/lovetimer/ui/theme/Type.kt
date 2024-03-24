@@ -1,4 +1,4 @@
-package com.example.lovetimer.ui.theme
+package com.chengkun.lovetimer.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
