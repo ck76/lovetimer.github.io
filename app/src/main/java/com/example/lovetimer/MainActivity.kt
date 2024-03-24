@@ -66,7 +66,6 @@ class MainActivity : ComponentActivity() {
 fun LoveTimerApp() {
     val context = LocalContext.current
 
-    var updateTrigger by remember { mutableStateOf(0) }
     val showCustomDateTimePicker = remember { mutableStateOf(false) }
     val (initialUri, initialStartTime) = loadPreferences(context)
     var startTime by rememberSaveable { mutableStateOf(initialStartTime) }
@@ -77,8 +76,6 @@ fun LoveTimerApp() {
             uri?.let { selectedUri ->
                 try {
                     selectedImageUri = uri.toString()
-                    updateTrigger = updateTrigger + 1
-//                    updateTrigger = updateTrigger + 1
                     savePreferences(context, selectedImageUri, null)
                     // 请求持久化权限
                     val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
@@ -98,7 +95,6 @@ fun LoveTimerApp() {
         // Display Love Time
         val (startYear, startMonth, startDay) = startTime.toString().split("-")
         LoveTimeDisplay(
-            selectedImageUri,
             selectedImageUri,
             startYear.toInt(),
             startMonth.toInt(),
@@ -125,7 +121,8 @@ fun LoveTimerApp() {
             onDateTimeSelected = { dateTime, dataTimeString ->
                 startTime = dataTimeString
                 savePreferences(context, null, dataTimeString)
-            }
+            },
+            context
         )
     }
 }
@@ -135,7 +132,6 @@ fun LoveTimerApp() {
 @Composable
 fun LoveTimeDisplay(
     selectedImageUri: String?,
-    targetImageUri: String?,
     startYear: Int,
     startMonth: Int,
     startDay: Int,
@@ -254,20 +250,31 @@ fun loadPreferences(context: Context): Pair<String?, String?> {
 @Composable
 fun CustomDateTimePickerDialog(
     showDialog: MutableState<Boolean>,
-    onDateTimeSelected: (LocalDateTime, String) -> Unit
+    onDateTimeSelected: (LocalDateTime, String) -> Unit,
+    context: Context // 添加Context参数以允许访问资源字符串
 ) {
     if (showDialog.value) {
         val year = remember { mutableStateOf("") }
         val month = remember { mutableStateOf("") }
         val day = remember { mutableStateOf("") }
-        val hour = remember { mutableStateOf("0") } // 默认为0
-        val minute = remember { mutableStateOf("0") } // 默认为0
+
+        // 定义变量以存储潜在的错误消息
+        val errorMessage = remember { mutableStateOf<String?>(null) }
 
         AlertDialog(
-            onDismissRequest = { showDialog.value = false },
+            onDismissRequest = {
+                // 重置错误消息并关闭对话框
+                errorMessage.value = null
+                showDialog.value = false
+            },
             title = { Text(text = "Select Date and Time") },
             text = {
                 Column {
+                    // 如果有错误消息，显示它
+                    errorMessage.value?.let {
+                        Text(text = it, color = MaterialTheme.colorScheme.error)
+                    }
+
                     TextField(
                         value = year.value,
                         onValueChange = { year.value = it },
@@ -291,28 +298,39 @@ fun CustomDateTimePickerDialog(
             confirmButton = {
                 Button(
                     onClick = {
-                        showDialog.value = false
-                        val dateTime = LocalDateTime.of(
-                            year.value.toIntOrNull() ?: LocalDate.now().year,
-                            month.value.toIntOrNull() ?: LocalDate.now().monthValue,
-                            day.value.toIntOrNull() ?: LocalDate.now().dayOfMonth,
-                            hour.value.toIntOrNull() ?: 0,
-                            minute.value.toIntOrNull() ?: 0,
+                        val selectedDate = LocalDate.of(
+                            year.value.toIntOrNull() ?: return@Button,
+                            month.value.toIntOrNull() ?: return@Button,
+                            day.value.toIntOrNull() ?: return@Button
                         )
-                        val dataTimeString =
-                            dateTime.year.toString() + "-" + dateTime.monthValue.toString() + "-" + dateTime.dayOfMonth.toString() + "-" + dateTime.hour.toString() + "-" + dateTime.minute.toString()
-                        onDateTimeSelected(dateTime, dataTimeString)
+
+                        // 校验所选日期不晚于今天
+                        if (selectedDate.isAfter(LocalDate.now())) {
+                            // 更新错误消息
+                            errorMessage.value = "The selected date cannot be later than today."
+                        } else {
+                            val dataTimeString =
+                                "${selectedDate.year}-${selectedDate.monthValue}-${selectedDate.dayOfMonth}"
+                            onDateTimeSelected(selectedDate.atStartOfDay(), dataTimeString)
+                            errorMessage.value = null
+                            showDialog.value = false
+                        }
                     }
                 ) {
                     Text("OK")
                 }
             },
             dismissButton = {
-                Button(onClick = { showDialog.value = false }) {
+                Button(onClick = {
+                    // 重置错误消息并关闭对话框
+                    errorMessage.value = null
+                    showDialog.value = false
+                }) {
                     Text("Cancel")
                 }
             }
         )
     }
 }
+
 
